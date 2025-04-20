@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
 
 -- Create ScreenGui
 local screenGui = Instance.new("ScreenGui")
@@ -11,94 +12,109 @@ screenGui.Name = "TeleportGui"
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 screenGui.ResetOnSpawn = false
 
--- Create main Frame
+-- Create main Frame (adjusted for better fit)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 400, 0, 600)
-frame.Position = UDim2.new(0.5, -200, 0.5, -300)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Size = UDim2.new(0, 450, 0, 550) -- Slightly wider and shorter for better fit
+frame.Position = UDim2.new(0.5, -225, 0.5, -275) -- Centered
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 frame.BorderSizePixel = 0
 frame.Visible = true
 frame.Parent = screenGui
 
 local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0, 12)
+frameCorner.CornerRadius = UDim.new(0, 16)
 frameCorner.Parent = frame
+
+local frameGradient = Instance.new("UIGradient")
+frameGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 30)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 40, 60))
+})
+frameGradient.Parent = frame
 
 -- Create Tab Frame
 local tabFrame = Instance.new("Frame")
-tabFrame.Size = UDim2.new(1, 0, 0, 40)
-tabFrame.Position = UDim2.new(0, 0, 0, 10)
-tabFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+tabFrame.Size = UDim2.new(1, -20, 0, 50) -- Slightly taller tabs
+tabFrame.Position = UDim2.new(0, 10, 0, 10)
+tabFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
 tabFrame.BorderSizePixel = 0
 tabFrame.Parent = frame
 
 local tabFrameCorner = Instance.new("UICorner")
-tabFrameCorner.CornerRadius = UDim.new(0, 8)
+tabFrameCorner.CornerRadius = UDim.new(0, 10)
 tabFrameCorner.Parent = tabFrame
 
--- Create Teleport Tab Button
-local teleportTab = Instance.new("TextButton")
-teleportTab.Size = UDim2.new(0.25, -5, 0, 30)
-teleportTab.Position = UDim2.new(0, 5, 0, 5)
-teleportTab.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-teleportTab.BorderSizePixel = 0
-teleportTab.Text = "Teleport"
-teleportTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-teleportTab.TextSize = 14
-teleportTab.Font = Enum.Font.Gotham
-teleportTab.Parent = tabFrame
+local tabFrameGradient = Instance.new("UIGradient")
+tabFrameGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 45)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 70))
+})
+tabFrameGradient.Parent = tabFrame
 
-local teleportTabCorner = Instance.new("UICorner")
-teleportTabCorner.CornerRadius = UDim.new(0, 6)
-teleportTabCorner.Parent = teleportTab
+-- Function to create a tab button with enhanced effects
+local function createTabButton(name, position, isActive)
+    local tab = Instance.new("TextButton")
+    tab.Size = UDim2.new(0.24, -10, 0, 40)
+    tab.Position = position
+    tab.BackgroundColor3 = isActive and Color3.fromRGB(70, 130, 255) or Color3.fromRGB(50, 50, 70)
+    tab.BorderSizePixel = 0
+    tab.Text = name
+    tab.TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    tab.TextSize = 16
+    tab.Font = Enum.Font.GothamBold
+    tab.Parent = tabFrame
 
--- Create ClientSided Tab Button
-local clientTab = Instance.new("TextButton")
-clientTab.Size = UDim2.new(0.25, -5, 0, 30)
-clientTab.Position = UDim2.new(0.25, 0, 0, 5)
-clientTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-clientTab.BorderSizePixel = 0
-clientTab.Text = "ClientSided"
-clientTab.TextColor3 = Color3.fromRGB(200, 200, 200)
-clientTab.TextSize = 14
-clientTab.Font = Enum.Font.Gotham
-clientTab.Parent = tabFrame
+    local tabCorner = Instance.new("UICorner")
+    tabCorner.CornerRadius = UDim.new(0, 8)
+    tabCorner.Parent = tab
 
-local clientTabCorner = Instance.new("UICorner")
-clientTabCorner.CornerRadius = UDim.new(0, 6)
-clientTabCorner.Parent = clientTab
+    local tabGradient = Instance.new("UIGradient")
+    tabGradient.Color = isActive and ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 130, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 160, 255))
+    }) or ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 70)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 90))
+    })
+    tabGradient.Parent = tab
 
--- Create FunStuff Tab Button
-local funTab = Instance.new("TextButton")
-funTab.Size = UDim2.new(0.25, -5, 0, 30)
-funTab.Position = UDim2.new(0.5, 0, 0, 5)
-funTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-funTab.BorderSizePixel = 0
-funTab.Text = "FunStuff"
-funTab.TextColor3 = Color3.fromRGB(200, 200, 200)
-funTab.TextSize = 14
-funTab.Font = Enum.Font.Gotham
-funTab.Parent = tabFrame
+    -- Add hover effect
+    tab.MouseEnter:Connect(function()
+        if not isActive then
+            local tween = TweenService:Create(tab, TweenInfo.new(0.2), {BackgroundTransparency = 0.1})
+            tween:Play()
+            local gradientTween = TweenService:Create(tabGradient, TweenInfo.new(0.2), {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 80, 100)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 120))
+                })
+            })
+            gradientTween:Play()
+        end
+    end)
 
-local funTabCorner = Instance.new("UICorner")
-funTabCorner.CornerRadius = UDim.new(0, 6)
-funTabCorner.Parent = funTab
+    tab.MouseLeave:Connect(function()
+        if not isActive then
+            local tween = TweenService:Create(tab, TweenInfo.new(0.2), {BackgroundTransparency = 0})
+            tween:Play()
+            local gradientTween = TweenService:Create(tabGradient, TweenInfo.new(0.2), {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 70)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 90))
+                })
+            })
+            gradientTween:Play()
+        end
+    end)
 
--- Create Phone Tab Button
-local phoneTab = Instance.new("TextButton")
-phoneTab.Size = UDim2.new(0.25, -5, 0, 30)
-phoneTab.Position = UDim2.new(0.75, 0, 0, 5)
-phoneTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-phoneTab.BorderSizePixel = 0
-phoneTab.Text = "Phone"
-phoneTab.TextColor3 = Color3.fromRGB(200, 200, 200)
-phoneTab.TextSize = 14
-phoneTab.Font = Enum.Font.Gotham
-phoneTab.Parent = tabFrame
+    return tab
+end
 
-local phoneTabCorner = Instance.new("UICorner")
-phoneTabCorner.CornerRadius = UDim.new(0, 6)
-phoneTabCorner.Parent = phoneTab
+-- Create Tab Buttons
+local teleportTab = createTabButton("Teleport", UDim2.new(0, 5, 0, 5), true)
+local clientTab = createTabButton("ClientSided", UDim2.new(0.25, 0, 0, 5), false)
+local funTab = createTabButton("FunStuff", UDim2.new(0.5, 0, 0, 5), false)
+local phoneTab = createTabButton("Phone", UDim2.new(0.75, 0, 0, 5), false)
 
 -- Create Close Button (X)
 local closeButton = Instance.new("TextButton")
@@ -172,15 +188,15 @@ noCorner.Parent = noButton
 
 -- Create Teleport Frame
 local teleportFrame = Instance.new("Frame")
-teleportFrame.Size = UDim2.new(0.95, 0, 0.85, 0)
-teleportFrame.Position = UDim2.new(0.025, 0, 0, 60)
+teleportFrame.Size = UDim2.new(0.95, 0, 0.82, 0) -- Adjusted to fit better
+teleportFrame.Position = UDim2.new(0.025, 0, 0, 70)
 teleportFrame.BackgroundTransparency = 1
 teleportFrame.Parent = frame
 
 local playerList = Instance.new("ScrollingFrame")
 playerList.Size = UDim2.new(1, 0, 0.7, 0)
 playerList.Position = UDim2.new(0, 0, 0, 0)
-playerList.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+playerList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
 playerList.BorderSizePixel = 0
 playerList.CanvasSize = UDim2.new(0, 0, 0, 0)
 playerList.ScrollBarThickness = 8
@@ -212,8 +228,8 @@ buttonCorner.Parent = teleportButton
 
 -- Create ClientSided Frame
 local clientFrame = Instance.new("Frame")
-clientFrame.Size = UDim2.new(0.95, 0, 0.85, 0)
-clientFrame.Position = UDim2.new(0.025, 0, 0, 60)
+clientFrame.Size = UDim2.new(0.95, 0, 0.82, 0)
+clientFrame.Position = UDim2.new(0.025, 0, 0, 70)
 clientFrame.BackgroundTransparency = 1
 clientFrame.Visible = false
 clientFrame.Parent = frame
@@ -232,7 +248,7 @@ nameLabel.Parent = clientFrame
 local nameBox = Instance.new("TextBox")
 nameBox.Size = UDim2.new(1, 0, 0, 40)
 nameBox.Position = UDim2.new(0, 0, 0, 30)
-nameBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+nameBox.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 nameBox.BorderSizePixel = 0
 nameBox.Text = ""
 nameBox.PlaceholderText = "Enter new display name"
@@ -248,7 +264,7 @@ nameBoxCorner.Parent = nameBox
 local glowButton = Instance.new("TextButton")
 glowButton.Size = UDim2.new(1, 0, 0, 40)
 glowButton.Position = UDim2.new(0, 0, 0, 80)
-glowButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+glowButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 glowButton.BorderSizePixel = 0
 glowButton.Text = "Toggle Player Glow: Off"
 glowButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -263,7 +279,7 @@ glowCorner.Parent = glowButton
 local speedButton = Instance.new("TextButton")
 speedButton.Size = UDim2.new(1, 0, 0, 40)
 speedButton.Position = UDim2.new(0, 0, 0, 130)
-speedButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+speedButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 speedButton.BorderSizePixel = 0
 speedButton.Text = "Toggle WalkSpeed Boost: Off"
 speedButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -278,7 +294,7 @@ speedCorner.Parent = speedButton
 local jumpButton = Instance.new("TextButton")
 jumpButton.Size = UDim2.new(1, 0, 0, 40)
 jumpButton.Position = UDim2.new(0, 0, 0, 180)
-jumpButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+jumpButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 jumpButton.BorderSizePixel = 0
 jumpButton.Text = "Toggle JumpPower Boost: Off"
 jumpButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -292,8 +308,8 @@ jumpCorner.Parent = jumpButton
 
 -- Create FunStuff Frame
 local funFrame = Instance.new("Frame")
-funFrame.Size = UDim2.new(0.95, 0, 0.85, 0)
-funFrame.Position = UDim2.new(0.025, 0, 0, 60)
+funFrame.Size = UDim2.new(0.95, 0, 0.82, 0)
+funFrame.Position = UDim2.new(0.025, 0, 0, 70)
 funFrame.BackgroundTransparency = 1
 funFrame.Visible = false
 funFrame.Parent = frame
@@ -301,7 +317,7 @@ funFrame.Parent = frame
 local thirdPersonButton = Instance.new("TextButton")
 thirdPersonButton.Size = UDim2.new(1, 0, 0, 40)
 thirdPersonButton.Position = UDim2.new(0, 0, 0, 0)
-thirdPersonButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+thirdPersonButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 thirdPersonButton.BorderSizePixel = 0
 thirdPersonButton.Text = "Toggle Third-Person: Off"
 thirdPersonButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -327,7 +343,7 @@ chatLabel.Parent = funFrame
 local chatBox = Instance.new("TextBox")
 chatBox.Size = UDim2.new(1, 0, 0, 40)
 chatBox.Position = UDim2.new(0, 0, 0, 80)
-chatBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+chatBox.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 chatBox.BorderSizePixel = 0
 chatBox.Text = ""
 chatBox.PlaceholderText = "Enter chat message"
@@ -343,7 +359,7 @@ chatBoxCorner.Parent = chatBox
 local chatSpamButton = Instance.new("TextButton")
 chatSpamButton.Size = UDim2.new(1, 0, 0, 40)
 chatSpamButton.Position = UDim2.new(0, 0, 0, 130)
-chatSpamButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+chatSpamButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 chatSpamButton.BorderSizePixel = 0
 chatSpamButton.Text = "Toggle Chat Spam: Off"
 chatSpamButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -369,7 +385,7 @@ fovLabel.Parent = funFrame
 local fovBox = Instance.new("TextBox")
 fovBox.Size = UDim2.new(1, 0, 0, 40)
 fovBox.Position = UDim2.new(0, 0, 0, 210)
-fovBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+fovBox.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 fovBox.BorderSizePixel = 0
 fovBox.Text = ""
 fovBox.PlaceholderText = "Enter FOV (e.g., 90)"
@@ -385,7 +401,7 @@ fovBoxCorner.Parent = fovBox
 local transButton = Instance.new("TextButton")
 transButton.Size = UDim2.new(1, 0, 0, 40)
 transButton.Position = UDim2.new(0, 0, 0, 260)
-transButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+transButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 transButton.BorderSizePixel = 0
 transButton.Text = "Toggle Transparency: Off"
 transButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -400,7 +416,7 @@ transCorner.Parent = transButton
 local skyButton = Instance.new("TextButton")
 skyButton.Size = UDim2.new(1, 0, 0, 40)
 skyButton.Position = UDim2.new(0, 0, 0, 310)
-skyButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+skyButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 skyButton.BorderSizePixel = 0
 skyButton.Text = "Cycle Skybox Color"
 skyButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -414,8 +430,8 @@ skyCorner.Parent = skyButton
 
 -- Create Phone Frame
 local phoneFrame = Instance.new("Frame")
-phoneFrame.Size = UDim2.new(0.95, 0, 0.85, 0)
-phoneFrame.Position = UDim2.new(0.025, 0, 0, 60)
+phoneFrame.Size = UDim2.new(0.95, 0, 0.82, 0)
+phoneFrame.Position = UDim2.new(0.025, 0, 0, 70)
 phoneFrame.BackgroundTransparency = 1
 phoneFrame.Visible = false
 phoneFrame.Parent = frame
@@ -475,8 +491,8 @@ musicGradient.Parent = musicButton
 
 -- Settings Frame
 local settingsFrame = Instance.new("Frame")
-settingsFrame.Size = UDim2.new(0.95, 0, 0.85, 0)
-settingsFrame.Position = UDim2.new(0.025, 0, 0, 60)
+settingsFrame.Size = UDim2.new(0.95, 0, 0.82, 0)
+settingsFrame.Position = UDim2.new(0.025, 0, 0, 70)
 settingsFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 settingsFrame.BorderSizePixel = 0
 settingsFrame.Visible = false
@@ -518,7 +534,7 @@ settingsBackCorner.Parent = settingsBackButton
 local hideGuiButton = Instance.new("TextButton")
 hideGuiButton.Size = UDim2.new(1, -10, 0, 40)
 hideGuiButton.Position = UDim2.new(0, 5, 0, 0)
-hideGuiButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+hideGuiButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 hideGuiButton.BorderSizePixel = 0
 hideGuiButton.Text = "Hide GUI: Off"
 hideGuiButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -533,7 +549,7 @@ hideGuiCorner.Parent = hideGuiButton
 local muteSoundButton = Instance.new("TextButton")
 muteSoundButton.Size = UDim2.new(1, -10, 0, 40)
 muteSoundButton.Position = UDim2.new(0, 5, 0, 45)
-muteSoundButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+muteSoundButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 muteSoundButton.BorderSizePixel = 0
 muteSoundButton.Text = "Mute Sound: Off"
 muteSoundButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -548,7 +564,7 @@ muteSoundCorner.Parent = muteSoundButton
 local dragToggleButton = Instance.new("TextButton")
 dragToggleButton.Size = UDim2.new(1, -10, 0, 40)
 dragToggleButton.Position = UDim2.new(0, 5, 0, 90)
-dragToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+dragToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 dragToggleButton.BorderSizePixel = 0
 dragToggleButton.Text = "GUI Dragging: On"
 dragToggleButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -563,7 +579,7 @@ dragToggleCorner.Parent = dragToggleButton
 local mouseLockButton = Instance.new("TextButton")
 mouseLockButton.Size = UDim2.new(1, -10, 0, 40)
 mouseLockButton.Position = UDim2.new(0, 5, 0, 135)
-mouseLockButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+mouseLockButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 mouseLockButton.BorderSizePixel = 0
 mouseLockButton.Text = "Force Mouse Unlock: Off"
 mouseLockButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -578,7 +594,7 @@ mouseLockCorner.Parent = mouseLockButton
 local resetFovButton = Instance.new("TextButton")
 resetFovButton.Size = UDim2.new(1, -10, 0, 40)
 resetFovButton.Position = UDim2.new(0, 5, 0, 180)
-resetFovButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+resetFovButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 resetFovButton.BorderSizePixel = 0
 resetFovButton.Text = "Reset Camera FOV"
 resetFovButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -593,7 +609,7 @@ resetFovCorner.Parent = resetFovButton
 local thirdPersonLockButton = Instance.new("TextButton")
 thirdPersonLockButton.Size = UDim2.new(1, -10, 0, 40)
 thirdPersonLockButton.Position = UDim2.new(0, 5, 0, 225)
-thirdPersonLockButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+thirdPersonLockButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 thirdPersonLockButton.BorderSizePixel = 0
 thirdPersonLockButton.Text = "Third-Person Lock: Off"
 thirdPersonLockButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -608,7 +624,7 @@ thirdPersonLockCorner.Parent = thirdPersonLockButton
 local themeButton = Instance.new("TextButton")
 themeButton.Size = UDim2.new(1, -10, 0, 40)
 themeButton.Position = UDim2.new(0, 5, 0, 270)
-themeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+themeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 themeButton.BorderSizePixel = 0
 themeButton.Text = "GUI Theme: Dark"
 themeButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -623,7 +639,7 @@ themeCorner.Parent = themeButton
 local opacityButton = Instance.new("TextButton")
 opacityButton.Size = UDim2.new(1, -10, 0, 40)
 opacityButton.Position = UDim2.new(0, 5, 0, 315)
-opacityButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+opacityButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 opacityButton.BorderSizePixel = 0
 opacityButton.Text = "GUI Opacity: 0"
 opacityButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -638,7 +654,7 @@ opacityCorner.Parent = opacityButton
 local chatVisibilityButton = Instance.new("TextButton")
 chatVisibilityButton.Size = UDim2.new(1, -10, 0, 40)
 chatVisibilityButton.Position = UDim2.new(0, 5, 0, 360)
-chatVisibilityButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+chatVisibilityButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
 chatVisibilityButton.BorderSizePixel = 0
 chatVisibilityButton.Text = "Chat Visibility: On"
 chatVisibilityButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -652,8 +668,8 @@ chatVisibilityCorner.Parent = chatVisibilityButton
 
 -- Music Frame
 local musicFrame = Instance.new("Frame")
-musicFrame.Size = UDim2.new(0.95, 0, 0.85, 0)
-musicFrame.Position = UDim2.new(0.025, 0, 0, 60)
+musicFrame.Size = UDim2.new(0.95, 0, 0.82, 0)
+musicFrame.Position = UDim2.new(0.025, 0, 0, 70)
 musicFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 musicFrame.BorderSizePixel = 0
 musicFrame.Visible = false
@@ -779,6 +795,33 @@ sound.Parent = frame
 sound.Looped = true
 
 -- Tab switching
+local function resetTabColors()
+    teleportTab.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    clientTab.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    funTab.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    phoneTab.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    teleportTab.TextColor3 = Color3.fromRGB(200, 200, 200)
+    clientTab.TextColor3 = Color3.fromRGB(200, 200, 200)
+    funTab.TextColor3 = Color3.fromRGB(200, 200, 200)
+    phoneTab.TextColor3 = Color3.fromRGB(200, 200, 200)
+    teleportTab:FindFirstChild("UIGradient").Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 70)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 90))
+    })
+    clientTab:FindFirstChild("UIGradient").Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 70)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 90))
+    })
+    funTab:FindFirstChild("UIGradient").Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 70)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 90))
+    })
+    phoneTab:FindFirstChild("UIGradient").Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 70)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 90))
+    })
+end
+
 teleportTab.MouseButton1Click:Connect(function()
     teleportFrame.Visible = true
     clientFrame.Visible = false
@@ -786,10 +829,13 @@ teleportTab.MouseButton1Click:Connect(function()
     phoneFrame.Visible = false
     settingsFrame.Visible = false
     musicFrame.Visible = false
-    teleportTab.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    clientTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    funTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    phoneTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    resetTabColors()
+    teleportTab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+    teleportTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    teleportTab:FindFirstChild("UIGradient").Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 130, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 160, 255))
+    })
 end)
 
 clientTab.MouseButton1Click:Connect(function()
@@ -799,10 +845,13 @@ clientTab.MouseButton1Click:Connect(function()
     phoneFrame.Visible = false
     settingsFrame.Visible = false
     musicFrame.Visible = false
-    teleportTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    clientTab.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    funTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    phoneTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    resetTabColors()
+    clientTab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+    clientTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    clientTab:FindFirstChild("UIGradient").Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 130, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 160, 255))
+    })
 end)
 
 funTab.MouseButton1Click:Connect(function()
@@ -812,10 +861,13 @@ funTab.MouseButton1Click:Connect(function()
     phoneFrame.Visible = false
     settingsFrame.Visible = false
     musicFrame.Visible = false
-    teleportTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    clientTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    funTab.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    phoneTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    resetTabColors()
+    funTab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+    funTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    funTab:FindFirstChild("UIGradient").Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 130, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 160, 255))
+    })
 end)
 
 phoneTab.MouseButton1Click:Connect(function()
@@ -825,10 +877,13 @@ phoneTab.MouseButton1Click:Connect(function()
     phoneFrame.Visible = true
     settingsFrame.Visible = false
     musicFrame.Visible = false
-    teleportTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    clientTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    funTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    phoneTab.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    resetTabColors()
+    phoneTab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+    phoneTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    phoneTab:FindFirstChild("UIGradient").Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 130, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 160, 255))
+    })
     print("Phone tab loaded")
 end)
 
@@ -866,7 +921,7 @@ local function updatePlayerList()
             local button = Instance.new("TextButton")
             button.Size = UDim2.new(1, -10, 0, 40)
             button.Position = UDim2.new(0, 5, 0, yOffset)
-            button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            button.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
             button.BorderSizePixel = 0
             button.Text = player.Name
             button.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -882,7 +937,7 @@ local function updatePlayerList()
                 selectedPlayer = player
                 for _, otherButton in ipairs(playerList:GetChildren()) do
                     if otherButton:IsA("TextButton") then
-                        otherButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                        otherButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
                     end
                 end
                 button.BackgroundColor3 = Color3.fromRGB(0, 80, 200)
