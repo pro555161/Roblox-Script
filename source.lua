@@ -12,6 +12,24 @@ screenGui.Name = "TeleportGui"
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 screenGui.ResetOnSpawn = false
 
+-- Create "Simple Script" Rainbow Text
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(0, 200, 0, 50)
+titleLabel.Position = UDim2.new(0.5, -100, 0.5, -325) -- Above the main frame
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Simple Script"
+titleLabel.TextSize = 28
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Parent = screenGui
+
+-- Rainbow effect for title
+RunService.Heartbeat:Connect(function(t)
+    local hue = (t * 100) % 360
+    local color = Color3.fromHSV(hue / 360, 1, 1)
+    titleLabel.TextColor3 = color
+end)
+
 -- Create main Frame (adjusted for better fit)
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 450, 0, 550) -- Slightly wider and shorter for better fit
@@ -755,6 +773,67 @@ timeDisplay.TextSize = 16
 timeDisplay.Font = Enum.Font.Gotham
 timeDisplay.Parent = musicFrame
 
+-- Notification System
+local notificationCount = 0
+local function notify(message, status)
+    notificationCount = notificationCount + 1
+    local notificationFrame = Instance.new("Frame")
+    notificationFrame.Size = UDim2.new(0, 200, 0, 50)
+    notificationFrame.Position = UDim2.new(1, 210, 0, 10 + (notificationCount - 1) * 60)
+    notificationFrame.BackgroundColor3 = status == "Success" and Color3.fromRGB(40, 200, 40) or Color3.fromRGB(200, 40, 40)
+    notificationFrame.BorderSizePixel = 0
+    notificationFrame.Parent = screenGui
+
+    local notifyCorner = Instance.new("UICorner")
+    notifyCorner.CornerRadius = UDim.new(0, 8)
+    notifyCorner.Parent = notificationFrame
+
+    local notifyGradient = Instance.new("UIGradient")
+    notifyGradient.Color = status == "Success" and ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 200, 40)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 220, 60))
+    }) or ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 40, 40)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 60, 60))
+    })
+    notifyGradient.Parent = notificationFrame
+
+    local notifyLabel = Instance.new("TextLabel")
+    notifyLabel.Size = UDim2.new(1, 0, 1, 0)
+    notifyLabel.BackgroundTransparency = 1
+    notifyLabel.Text = message
+    notifyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notifyLabel.TextSize = 16
+    notifyLabel.Font = Enum.Font.GothamBold
+    notifyLabel.Parent = notificationFrame
+
+    -- Slide in animation
+    local slideIn = TweenService:Create(notificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(1, -210, 0, 10 + (notificationCount - 1) * 60)
+    })
+    slideIn:Play()
+
+    -- Fade out and slide out after 3 seconds
+    spawn(function()
+        wait(3)
+        local fadeOut = TweenService:Create(notificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            BackgroundTransparency = 1
+        })
+        local slideOut = TweenService:Create(notificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Position = UDim2.new(1, 210, 0, 10 + (notificationCount - 1) * 60)
+        })
+        local fadeLabel = TweenService:Create(notifyLabel, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            TextTransparency = 1
+        })
+        fadeOut:Play()
+        slideOut:Play()
+        fadeLabel:Play()
+        wait(0.5)
+        notificationFrame:Destroy()
+        notificationCount = notificationCount - 1
+    end)
+end
+
 -- Variables
 local selectedPlayer = nil
 local glowEnabled = false
@@ -950,25 +1029,33 @@ local function updatePlayerList()
     playerList.CanvasSize = UDim2.new(0, 0, 0, yOffset)
 end
 
--- Teleport function
+-- Teleport function with notification
 teleportButton.MouseButton1Click:Connect(function()
     if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local targetPos = selectedPlayer.Character.HumanoidRootPart.Position
         local character = LocalPlayer.Character
         if character and character:FindFirstChild("HumanoidRootPart") then
             character.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+            notify("Teleported to " .. selectedPlayer.Name, "Success")
+        else
+            notify("Teleport Failed: No character found", "Failed")
         end
+    else
+        notify("Teleport Failed: No player selected", "Failed")
     end
 end)
 
--- Change Display Name
+-- Change Display Name with notification
 nameBox.FocusLost:Connect(function(enterPressed)
     if enterPressed and nameBox.Text ~= "" then
         LocalPlayer.DisplayName = nameBox.Text
+        notify("Display Name Changed to " .. nameBox.Text, "Success")
+    elseif enterPressed then
+        notify("Failed: Display Name cannot be empty", "Failed")
     end
 end)
 
--- Toggle Player Glow
+-- Toggle Player Glow with notification
 glowButton.MouseButton1Click:Connect(function()
     glowEnabled = not glowEnabled
     glowButton.Text = "Toggle Player Glow: " .. (glowEnabled and "On" or "Off")
@@ -980,36 +1067,44 @@ glowButton.MouseButton1Click:Connect(function()
             highlight.FillTransparency = 0.5
             highlight.OutlineTransparency = 0
             highlight.Parent = LocalPlayer.Character
+            notify("Player Glow Enabled", "Success")
         end
     else
         if highlight then
             highlight:Destroy()
             highlight = nil
+            notify("Player Glow Disabled", "Success")
         end
     end
 end)
 
--- Toggle WalkSpeed Boost
+-- Toggle WalkSpeed Boost with notification
 speedButton.MouseButton1Click:Connect(function()
     speedEnabled = not speedEnabled
     speedButton.Text = "Toggle WalkSpeed Boost: " .. (speedEnabled and "On" or "Off")
     local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
     if humanoid then
         humanoid.WalkSpeed = speedEnabled and 32 or 16
+        notify("WalkSpeed Boost " .. (speedEnabled and "Enabled" or "Disabled"), "Success")
+    else
+        notify("WalkSpeed Boost Failed: No humanoid found", "Failed")
     end
 end)
 
--- Toggle JumpPower Boost
+-- Toggle JumpPower Boost with notification
 jumpButton.MouseButton1Click:Connect(function()
     jumpEnabled = not jumpEnabled
     jumpButton.Text = "Toggle JumpPower Boost: " .. (jumpEnabled and "On" or "Off")
     local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
     if humanoid then
         humanoid.JumpPower = jumpEnabled and 75 or 50
+        notify("JumpPower Boost " .. (jumpEnabled and "Enabled" or "Disabled"), "Success")
+    else
+        notify("JumpPower Boost Failed: No humanoid found", "Failed")
     end
 end)
 
--- Third-Person Toggle
+-- Third-Person Toggle with notification
 local camera = workspace.CurrentCamera
 thirdPersonButton.MouseButton1Click:Connect(function()
     if not thirdPersonLocked then
@@ -1025,15 +1120,19 @@ thirdPersonButton.MouseButton1Click:Connect(function()
                     camera.Focus = CFrame.new(head.Position)
                 end
             end)
+            notify("Third-Person Enabled", "Success")
         else
             RunService:UnbindFromRenderStep("ThirdPersonCamera")
             camera.CameraType = Enum.CameraType.Custom
             LocalPlayer.CameraMode = Enum.CameraMode.Classic
+            notify("Third-Person Disabled", "Success")
         end
+    else
+        notify("Third-Person Toggle Failed: Locked", "Failed")
     end
 end)
 
--- Chat Spam
+-- Chat Spam with notification
 chatSpamButton.MouseButton1Click:Connect(function()
     chatSpamEnabled = not chatSpamEnabled
     chatSpamButton.Text = "Toggle Chat Spam: " .. (chatSpamEnabled and "On" or "Off")
@@ -1044,20 +1143,32 @@ chatSpamButton.MouseButton1Click:Connect(function()
                 wait(1)
             end
         end)
+        notify("Chat Spam Enabled", "Success")
+    elseif chatSpamEnabled then
+        notify("Chat Spam Failed: Message empty", "Failed")
+        chatSpamEnabled = false
+        chatSpamButton.Text = "Toggle Chat Spam: Off"
+    else
+        notify("Chat Spam Disabled", "Success")
     end
 end)
 
--- FOV Slider
+-- FOV Slider with notification
 fovBox.FocusLost:Connect(function(enterPressed)
     if enterPressed and fovBox.Text ~= "" then
         local fov = tonumber(fovBox.Text)
         if fov and fov >= 50 and fov <= 120 then
             camera.FieldOfView = fov
+            notify("FOV Set to " .. fov, "Success")
+        else
+            notify("FOV Failed: Must be 50-120", "Failed")
         end
+    elseif enterPressed then
+        notify("FOV Failed: Invalid input", "Failed")
     end
 end)
 
--- Toggle Character Transparency
+-- Toggle Character Transparency with notification
 transButton.MouseButton1Click:Connect(function()
     transEnabled = not transEnabled
     transButton.Text = "Toggle Transparency: " .. (transEnabled and "On" or "Off")
@@ -1068,10 +1179,13 @@ transButton.MouseButton1Click:Connect(function()
                 part.Transparency = transEnabled and 0.5 or 0
             end
         end
+        notify("Transparency " .. (transEnabled and "Enabled" or "Disabled"), "Success")
+    else
+        notify("Transparency Failed: No character found", "Failed")
     end
 end)
 
--- Cycle Skybox Color
+-- Cycle Skybox Color with notification
 skyButton.MouseButton1Click:Connect(function()
     currentSkyColor = (currentSkyColor % #skyColors) + 1
     if not skybox then
@@ -1089,16 +1203,19 @@ skyButton.MouseButton1Click:Connect(function()
     skybox.MoonAngularSize = 0
     skybox.CelestialBodiesShown = false
     Lighting.Ambient = skyColors[currentSkyColor]
+    notify("Skybox Color Changed", "Success")
 end)
 
--- Settings Toggles
+-- Settings Toggles with notifications
 hideGuiButton.MouseButton1Click:Connect(function()
     hideGuiEnabled = not hideGuiEnabled
     hideGuiButton.Text = "Hide GUI: " .. (hideGuiEnabled and "On" or "Off")
     if hideGuiEnabled then
         frame.Visible = false
+        notify("GUI Hidden", "Success")
     else
         frame.Visible = true
+        notify("GUI Shown", "Success")
     end
 end)
 
@@ -1106,20 +1223,24 @@ muteSoundButton.MouseButton1Click:Connect(function()
     muteSoundEnabled = not muteSoundEnabled
     muteSoundButton.Text = "Mute Sound: " .. (muteSoundEnabled and "On" or "Off")
     sound.Volume = muteSoundEnabled and 0 or 1
+    notify("Sound " .. (muteSoundEnabled and "Muted" or "Unmuted"), "Success")
 end)
 
 dragToggleButton.MouseButton1Click:Connect(function()
     dragEnabled = not dragEnabled
     dragToggleButton.Text = "GUI Dragging: " .. (dragEnabled and "On" or "Off")
+    notify("GUI Dragging " .. (dragEnabled and "Enabled" or "Disabled"), "Success")
 end)
 
 mouseLockButton.MouseButton1Click:Connect(function()
     mouseUnlockEnabled = not mouseUnlockEnabled
     mouseLockButton.Text = "Force Mouse Unlock: " .. (mouseUnlockEnabled and "On" or "Off")
+    notify("Mouse Unlock " .. (mouseUnlockEnabled and "Enabled" or "Disabled"), "Success")
 end)
 
 resetFovButton.MouseButton1Click:Connect(function()
     camera.FieldOfView = 70
+    notify("FOV Reset to 70", "Success")
 end)
 
 thirdPersonLockButton.MouseButton1Click:Connect(function()
@@ -1131,6 +1252,9 @@ thirdPersonLockButton.MouseButton1Click:Connect(function()
         RunService:UnbindFromRenderStep("ThirdPersonCamera")
         camera.CameraType = Enum.CameraType.Custom
         LocalPlayer.CameraMode = Enum.CameraMode.Classic
+        notify("Third-Person Locked and Disabled", "Success")
+    else
+        notify("Third-Person Lock " .. (thirdPersonLocked and "Enabled" or "Disabled"), "Success")
     end
 end)
 
@@ -1139,21 +1263,24 @@ themeButton.MouseButton1Click:Connect(function()
     themeButton.Text = "GUI Theme: " .. themes[themeIndex].name
     frame.BackgroundColor3 = themes[themeIndex].frameColor
     tabFrame.BackgroundColor3 = themes[themeIndex].tabColor
+    notify("Theme Changed to " .. themes[themeIndex].name, "Success")
 end)
 
 opacityButton.MouseButton1Click:Connect(function()
     opacityIndex = opacityIndex % #opacities + 1
     frame.BackgroundTransparency = opacities[opacityIndex]
     opacityButton.Text = "GUI Opacity: " .. opacities[opacityIndex]
+    notify("GUI Opacity Set to " .. opacities[opacityIndex], "Success")
 end)
 
 chatVisibilityButton.MouseButton1Click:Connect(function()
     chatVisible = not chatVisible
     chatVisibilityButton.Text = "Chat Visibility: " .. (chatVisible and "On" or "Off")
     StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, chatVisible)
+    notify("Chat " .. (chatVisible and "Shown" or "Hidden"), "Success")
 end)
 
--- Music Controls
+-- Music Controls with notifications
 local function formatTime(seconds)
     local mins = math.floor(seconds / 60)
     local secs = math.floor(seconds % 60)
@@ -1174,8 +1301,10 @@ playPauseButton.MouseButton1Click:Connect(function()
     if musicPlaying then
         sound.SoundId = tracks[currentTrack].id
         sound:Play()
+        notify("Music Playing", "Success")
     else
         sound:Pause()
+        notify("Music Paused", "Success")
     end
 end)
 
@@ -1187,6 +1316,7 @@ nextButton.MouseButton1Click:Connect(function()
         sound:Play()
     end
     updateSlider()
+    notify("Next Track Loaded", "Success")
 end)
 
 local sliderDragging = false
@@ -1221,29 +1351,34 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Close button handler
+-- Close button handler with notification
 closeButton.MouseButton1Click:Connect(function()
     frame.Visible = false
     confirmFrame.Visible = true
+    notify("Close Confirmation Opened", "Success")
 end)
 
 yesButton.MouseButton1Click:Connect(function()
     sound:Stop()
     screenGui:Destroy()
+    notify("Script Unloaded", "Success")
 end)
 
 noButton.MouseButton1Click:Connect(function()
     confirmFrame.Visible = false
     frame.Visible = true
+    notify("Close Cancelled", "Success")
 end)
 
--- RightCtrl Toggle
+-- RightCtrl Toggle with notification
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.RightControl then
         if hideGuiEnabled and not frame.Visible then
             frame.Visible = true
+            notify("GUI Shown (RightCtrl)", "Success")
         else
             frame.Visible = not frame.Visible
+            notify("GUI " .. (frame.Visible and "Shown" or "Hidden") .. " (RightCtrl)", "Success")
         end
     end
 end)
